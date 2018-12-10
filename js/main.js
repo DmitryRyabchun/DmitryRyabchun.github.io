@@ -12,7 +12,7 @@ window.onload = function(){
 
     var render = new THREE.WebGLRenderer({antialias:true});
     render.setSize(window.innerWidth, window.innerHeight);
-    render.setClearColor(0xFFFFFF);
+    render.setClearColor(0xbdbdbd);
     document.body.appendChild(render.domElement);
 
     var manager = new THREE.LoadingManager();
@@ -20,7 +20,7 @@ window.onload = function(){
 
     var objLoader = new THREE.OBJLoader();
     var meshes = [];
-    
+
 
 //--------------------Lighting--------------------
     var light = new THREE.DirectionalLight(0xfff7e8, 1);
@@ -53,27 +53,26 @@ window.onload = function(){
         console.log(object);
         object.traverse(function(child) {
             if(child instanceof THREE.Mesh) {
-                meshes.push(child);
+                meshes.push(new THREE.Geometry().fromBufferGeometry(child.geometry));
             }
         });
-        var table = [];
 
+        var geomTable = new THREE.Geometry();
         for(let i = 0; i < meshes.length; i++) {
-            table.push(meshes[i]);
-            scene.add(table[i]);
-
-            table[i].position.z = -0.660;
-
-            table[i].rotation.y = 45 * (Math.PI/180);
-
-            table[i].scale.x = 2;
-            table[i].scale.y = 2;
-            table[i].scale.z = 2;
-
-            table[i].material = new THREE.MeshPhongMaterial({
-                map: textureTable
-            });
+            geomTable.mergeMesh(new THREE.Mesh(meshes[i]));
         }
+        geomTable.mergeVertices();
+        var table = new THREE.Mesh(geomTable, new THREE.MeshPhongMaterial({map: textureTable}));
+
+        table.position.z = -0.660;
+
+        table.rotation.y = 45 * (Math.PI/180);
+
+        table.scale.x = 2;
+        table.scale.y = 2;
+        table.scale.z = 2;
+
+        scene.add(table);
     });
 
 
@@ -89,26 +88,25 @@ window.onload = function(){
         meshes = [];
         object.traverse(function(child) {
             if(child instanceof THREE.Mesh) {
-                meshes.push(child);
+                meshes.push(new THREE.Geometry().fromBufferGeometry(child.geometry));
             }
         });
-        var dresser = [];
 
+        var geomDresser = new THREE.Geometry();
         for(let i = 0; i < meshes.length; i++) {
-            dresser.push(meshes[i]);
-            scene.add(dresser[i]);
-
-            dresser[i].position.x = 7.157;
-            dresser[i].position.z = -10.030;
-
-            dresser[i].scale.x = 0.030;
-            dresser[i].scale.y = 0.030;
-            dresser[i].scale.z = 0.030;
-
-            dresser[i].material = new THREE.MeshPhongMaterial({
-                map: textureDresser
-            });
+            geomDresser.mergeMesh(new THREE.Mesh(meshes[i]));
         }
+        geomDresser.mergeVertices();
+        var dresser = new THREE.Mesh(geomDresser, new THREE.MeshPhongMaterial({map: textureDresser}));
+
+        dresser.position.x = 7.157;
+        dresser.position.z = -10.030;
+
+        dresser.scale.x = 0.030;
+        dresser.scale.y = 0.030;
+        dresser.scale.z = 0.030;
+
+        scene.add(dresser);
     });
 
 
@@ -198,11 +196,33 @@ window.onload = function(){
         mouseX = window.innerWidth/2;
     }
 
+    var mouse = new THREE.Vector2();
+
     function mouseMove(event) {
         if (cameraMove) {
             mouseX = event.clientX;
-            console.log(mouseX);
         }
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+        var x, y;
+
+        if ( event.changedTouches ) {
+
+            x = event.changedTouches[ 0 ].pageX;
+            y = event.changedTouches[ 0 ].pageY;
+
+        } else {
+
+            x = event.clientX;
+            y = event.clientY;
+
+        }
+
+        mouse.x = ( x / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+        checkIntersection();
     }
 
     window.addEventListener('keydown', keyDown);
@@ -212,33 +232,33 @@ window.onload = function(){
     window.addEventListener('mousemove', mouseMove);
     
     function cameraMovement() {
-        if(keyboard[87]){ // W key
+        if(keyboard[87]){
             camera.position.x -= Math.sin(camera.rotation.y) * observer.speed;
             camera.position.z -= Math.cos(camera.rotation.y) * observer.speed;
         }
-        if(keyboard[83]){ // S key
+        if(keyboard[83]){
             camera.position.x += Math.sin(camera.rotation.y) * observer.speed;
             camera.position.z += Math.cos(camera.rotation.y) * observer.speed;
         }
-        if(keyboard[65]){ // A key
+        if(keyboard[65]){
             camera.position.x += Math.sin(camera.rotation.y - Math.PI/2) * observer.speed;
             camera.position.z += Math.cos(camera.rotation.y - Math.PI/2) * observer.speed;
         }
-        if(keyboard[68]){ // D key
+        if(keyboard[68]){
             camera.position.x += Math.sin(camera.rotation.y + Math.PI/2) * observer.speed;
             camera.position.z += Math.cos(camera.rotation.y + Math.PI/2) * observer.speed;
         }
 
-        if(keyboard[37]){ // left arrow key
+        if(keyboard[37]){
             camera.rotation.y += observer.turnSpeed;
         }
-        if(keyboard[39]){ // right arrow key
+        if(keyboard[39]){
             camera.rotation.y -= observer.turnSpeed;
         }
-        if(keyboard[38]){ // left arrow key
+        if(keyboard[38]){
             camera.position.y += observer.turnSpeed;
         }
-        if(keyboard[40]){ // right arrow key
+        if(keyboard[40]){
             camera.position.y -= observer.turnSpeed;
         }
         if(cameraMove) {
@@ -247,14 +267,73 @@ window.onload = function(){
         }
     }
 
+    console.log(scene);
+
+
 
 //--------------------Rendering--------------------
+
+    var container;
+    var raycaster = new THREE.Raycaster();
+
+    var selectedObjects = [];
+
+    var composer, effectFXAA, outlinePass;
+    var group = new THREE.Group();
+
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
+
+    render.shadowMap.enabled = true;
+
+    scene.add( group );
+
+    composer = new THREE.EffectComposer( render );
+
+    var renderPass = new THREE.RenderPass( scene, camera );
+    composer.addPass( renderPass );
+
+    outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+    outlinePass.visibleEdgeColor.set( 0xff5722 );
+    outlinePass.hiddenEdgeColor.set(0xff5722);
+    composer.addPass( outlinePass );
+
+    effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+    effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+    effectFXAA.renderToScreen = true;
+    composer.addPass( effectFXAA );
+
+    function addSelectedObject( object ) {
+
+        selectedObjects = [];
+        selectedObjects.push( object );
+
+    }
+
+    function checkIntersection() {
+
+        raycaster.setFromCamera( mouse, camera );
+
+        var intersects = raycaster.intersectObjects( [ scene ], true );
+
+        if ( intersects.length > 0 && intersects[ 0 ].object.uuid !== scene.children[1].uuid) {
+            var selectedObject = intersects[ 0 ].object;
+            addSelectedObject( selectedObject );
+            outlinePass.selectedObjects = selectedObjects;
+
+        } else {
+
+            outlinePass.selectedObjects = [];
+
+        }
+
+    }
+
     var rendering = function() {
         requestAnimationFrame(rendering);
         cameraMovement();
-        console.log('x: '+camera.position.x+'\nz: '+camera.position.z+'\nr: '+camera.rotation.y);
-        render.render(scene, camera);
-    }
 
+        composer.render();
+    }
     rendering();
 }
