@@ -20,7 +20,21 @@
             padding: 0 10px;
             width: 196px;
         }
-        .help p {
+        .info {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            border: 2px solid black;
+            background: #ffffff;
+            padding: 0 10px;
+            display: none;
+        }
+        .close {
+            text-align: right;
+            font-size: 21px;
+            cursor: pointer;
+        }
+        .help p, info p {
             font-family: sans-serif;
             margin: 10px 0px;
         }
@@ -32,9 +46,13 @@
     <p>Use &#8592 &#8594 or the mouse to rotate the camera</p>
     <p>Use &#8593 &#8595 to change the view height</p>
 </div>
+<div class="info">
+    <div class="close" onclick="document.getElementsByClassName('info')[0].style.display = 'none'">&#215;</div>
+    <p class="description"></p>
+</div>
     <script src="js/three.min.js"></script>
     <script src="js/OBJLoader.js"></script>
-    <script src="js/WebGL.js"></script>
+    <!--<script src="js/WebGL.js"></script>-->
     <script src="js/CopyShader.js"></script>
     <script src="js/FXAAShader.js"></script>
     <script src="js/EffectComposer.js"></script>

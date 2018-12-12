@@ -31,7 +31,7 @@ window.onload = function(){
 
 
     //--------------------Floor--------------------
-    var textureFloor = THREE.ImageUtils.loadTexture('models/floor/floor_texture.jpg');
+    var textureFloor = THREE.ImageUtils.loadTexture('models/floor/floor_texture.jpeg');
     var floorGeometry = new THREE.PlaneGeometry( 20, 20, 20 );
     var floorMaterial = new THREE.MeshStandardMaterial({side: THREE.DoubleSide, map: textureFloor});
     var floor = new THREE.Mesh( floorGeometry, floorMaterial );
@@ -50,7 +50,6 @@ window.onload = function(){
     });
 
     objLoader.load('models/table/table.obj', function (object) {
-        console.log(object);
         object.traverse(function(child) {
             if(child instanceof THREE.Mesh) {
                 meshes.push(new THREE.Geometry().fromBufferGeometry(child.geometry));
@@ -84,7 +83,6 @@ window.onload = function(){
         textureDresser.needsUpdate = true;
     });
     objLoader.load('models/dresser/dresser.obj', function (object) {
-        console.log(object);
         meshes = [];
         object.traverse(function(child) {
             if(child instanceof THREE.Mesh) {
@@ -113,13 +111,12 @@ window.onload = function(){
 //--------------------Chair--------------------
     var textureChair = new THREE.Texture();
 
-    loader.load('models/chair/chair_texture.jpg', function(image) {
+    loader.load('models/chair/chair_texture.jpeg', function(image) {
         textureChair.image = image;
         textureChair.needsUpdate = true;
     });
 
     objLoader.load('models/chair/chair.obj', function (object) {
-        console.log(object);
         meshes = [];
         object.traverse(function(child) {
             if(child instanceof THREE.Mesh) {
@@ -141,7 +138,7 @@ window.onload = function(){
 //--------------------Sofa--------------------
     var textureSofa = new THREE.Texture();
 
-    loader.load('models/sofa/sofa_texture.jpg', function(image) {
+    loader.load('models/sofa/sofa_texture.jpeg', function(image) {
         textureSofa.image = image;
         textureSofa.needsUpdate = true;
     });
@@ -173,9 +170,38 @@ window.onload = function(){
 
 
 //--------------------Control--------------------
+    var mouse = new THREE.Vector2();
     var mouseX = window.innerWidth/2;
     var cameraMove = false;
     var lastMouseX = 0;
+    var moveLength = 0;
+
+    var furnitureData = [{
+        x: 0,
+        z: 0,
+        decription: 'cupboard'
+    }, {
+        x: 0,
+        z: 0,
+        decription: 'sofa'
+    }, {
+        x: 0,
+        z: 0,
+        decription: 'chair'
+    }, {
+        x: 0,
+        z: 0,
+        decription: 'table'
+    }];
+
+    manager.onLoad = function ( ) {
+        setTimeout(function (){
+            for(let i = 3; i < scene.children.length; i++) {
+                furnitureData[i-3].x = scene.children[i].position.x;
+                furnitureData[i-3].z = scene.children[i].position.z;
+            }
+        }, 1500);
+    };
     
     function keyDown(event){
         keyboard[event.keyCode] = true;
@@ -196,11 +222,10 @@ window.onload = function(){
         mouseX = window.innerWidth/2;
     }
 
-    var mouse = new THREE.Vector2();
-
     function mouseMove(event) {
         if (cameraMove) {
             mouseX = event.clientX;
+            moveLength++;
         }
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
@@ -208,21 +233,36 @@ window.onload = function(){
         var x, y;
 
         if ( event.changedTouches ) {
-
             x = event.changedTouches[ 0 ].pageX;
             y = event.changedTouches[ 0 ].pageY;
-
         } else {
-
             x = event.clientX;
             y = event.clientY;
-
         }
-
         mouse.x = ( x / window.innerWidth ) * 2 - 1;
         mouse.y = - ( y / window.innerHeight ) * 2 + 1;
 
         checkIntersection();
+    }
+
+    function mouseClick(event) {
+        raycaster.setFromCamera( mouse, camera );
+
+        var intersects = raycaster.intersectObjects( [ scene ], true );
+
+        if ( intersects.length > 0 && intersects[ 0 ].object.uuid !== scene.children[1].uuid && moveLength === 0) {
+            var selectedObject = intersects[ 0 ].object;
+            addSelectedObject( selectedObject );
+            for(let i = 0; i < furnitureData.length; i++) {
+                if(selectedObject.position.x === furnitureData[i].x && selectedObject.position.z === furnitureData[i].z) {
+                    document.getElementsByClassName('description')[0].innerHTML = furnitureData[i].decription;
+                }
+
+            }
+            document.getElementsByClassName('info')[0].style.display = 'block';
+        } else {
+            moveLength = 0;
+        }
     }
 
     window.addEventListener('keydown', keyDown);
@@ -230,6 +270,7 @@ window.onload = function(){
     window.addEventListener('mousedown', mouseDown);
     window.addEventListener('mouseup', mouseUp);
     window.addEventListener('mousemove', mouseMove);
+    window.addEventListener('click', mouseClick);
     
     function cameraMovement() {
         if(keyboard[87]){
@@ -266,9 +307,6 @@ window.onload = function(){
             lastMouseX = mouseX;
         }
     }
-
-    console.log(scene);
-
 
 
 //--------------------Rendering--------------------
@@ -320,19 +358,14 @@ window.onload = function(){
             var selectedObject = intersects[ 0 ].object;
             addSelectedObject( selectedObject );
             outlinePass.selectedObjects = selectedObjects;
-
         } else {
-
             outlinePass.selectedObjects = [];
-
         }
-
     }
 
     var rendering = function() {
         requestAnimationFrame(rendering);
         cameraMovement();
-
         composer.render();
     }
     rendering();
