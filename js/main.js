@@ -138,7 +138,7 @@ window.onload = function(){
 //--------------------Sofa--------------------
     var textureSofa = new THREE.Texture();
 
-    loader.load('models/sofa/sofa_texture.jpeg', function(image) {
+    loader.load('models/sofa/sofa_texture.png', function(image) {
         textureSofa.image = image;
         textureSofa.needsUpdate = true;
     });
@@ -200,7 +200,10 @@ window.onload = function(){
                 furnitureData[i-3].x = scene.children[i].position.x;
                 furnitureData[i-3].z = scene.children[i].position.z;
             }
+            document.getElementsByClassName('loader')[0].style.display = 'none';
+            clearInterval(loaderTimer);
         }, 1500);
+
     };
     
     function keyDown(event){
@@ -307,6 +310,22 @@ window.onload = function(){
             lastMouseX = mouseX;
         }
     }
+
+
+//--------------------Loading Screen--------------------
+
+    var loaderTimer = setInterval(function() {
+        switch (document.getElementsByClassName('loader-dots')[0].textContent) {
+            case '': document.getElementsByClassName('loader-dots')[0].innerHTML = '.';
+                break;
+            case '.': document.getElementsByClassName('loader-dots')[0].innerHTML = '..';
+                break;
+            case '..': document.getElementsByClassName('loader-dots')[0].innerHTML = '...';
+                break;
+            case '...': document.getElementsByClassName('loader-dots')[0].innerHTML = '';
+                break;
+        }
+    }, 500);
 
 
 //--------------------Rendering--------------------

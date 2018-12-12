@@ -38,6 +38,21 @@
             font-family: sans-serif;
             margin: 10px 0px;
         }
+        .loader {
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
+            height: 100%;
+            background: wheat;
+        }
+        .loader p {
+            text-align: center;
+            font-size: 30px;
+            font-family: sans-serif;
+            line-height: 100vh;
+            vertical-align: middle;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -50,9 +65,12 @@
     <div class="close" onclick="document.getElementsByClassName('info')[0].style.display = 'none'">&#215;</div>
     <p class="description"></p>
 </div>
+<div class="loader">
+    <p>Loading<span class="loader-dots"></span></p>
+</div>
     <script src="js/three.min.js"></script>
     <script src="js/OBJLoader.js"></script>
-    <!--<script src="js/WebGL.js"></script>-->
+    <script src="js/WebGL.js"></script>
     <script src="js/CopyShader.js"></script>
     <script src="js/FXAAShader.js"></script>
     <script src="js/EffectComposer.js"></script>
